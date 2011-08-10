@@ -1,0 +1,24 @@
+<html>
+	<head>
+		<title>{%= title %}</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script type='text/javascript'>
+      var settings = {
+        sid: '{%= sess_id %}'
+      };
+      
+      var socket = io.connect("http://localhost");
+      socket.on('connect', function() {
+        socket.emit('set_session', settings.sid);
+      });
+
+      socket.on('user_data', function(data) {
+        console.log(data);
+      });
+    </script>
+	</head>
+
+	<body>
+		Hello, {%= username %}!
+	</body>  
+</html>
