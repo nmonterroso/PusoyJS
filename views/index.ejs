@@ -7,7 +7,7 @@
         sid: '{%= sess_id %}'
       };
       
-      var socket = io.connect("http://localhost");
+      var socket = io.connect(window.location.origin);
       socket.on('connect', function() {
         socket.emit('set_session', settings.sid);
       });

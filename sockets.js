@@ -23,6 +23,7 @@ module.exports.bind = function(io) {
         users[session_id] = { sid: session_id, socket: socket };
         socket.set('session_id', session_id, function() {});
       } else {
+        users[session_id].socket = socket;
         socket.set('session_id', user.sid, function() {});
       }
     });
