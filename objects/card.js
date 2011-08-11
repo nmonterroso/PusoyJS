@@ -33,10 +33,15 @@ Card.prototype = {
         return 4;
       default:
         return 0;
+    }
   },
   is_higher_than: function(card) {
     return this.get_rank_value() > card.get_rank_value() || 
       this.get_suit_value() > card.get_suit_value();
+  },
+  equals: function(card) {
+    return this.get_rank_value() == card.get_rank_value() &&
+      this.get_suit_value() == card.get_suit_value();
   }
 };
 

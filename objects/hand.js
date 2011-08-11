@@ -39,7 +39,7 @@ Hand.prototype = {
       return rank_diff != 0 ? rank_diff : suit_diff;
     });
   },
-  set_type(): function() {
+  set_type: function() {
     if (this.size == 1) {
       this.type = Hand.TYPE_SINGLE;
     } else if (this.size == 2 && this.cards[0].get_rank_value() == this.cards[1].get_rank_value()) {
@@ -98,7 +98,6 @@ Hand.prototype = {
         this.cards[0].get_rank_value() == this.cards[2].get_rank_value() &&
         this.cards[0].get_rank_value() == this.cards[3].get_rank_value()) {
           return true;
-      }
     } else if (this.cards[1].get_rank_value() == this.cards[2].get_rank_value() &&
         this.cards[1].get_rank_value() == this.cards[3].get_rank_value() &&
         this.cards[1].get_rank_value() == this.cards[4].get_rank_value()) {

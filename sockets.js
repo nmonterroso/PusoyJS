@@ -1,4 +1,5 @@
 var EventEmitter = require('events').EventEmitter;
+var Pusoy = require('./objects/pusoy').Pusoy;
 var games_list = {};
 var users = {};
 
@@ -6,17 +7,6 @@ module.exports = new EventEmitter();
 
 module.exports.bind = function(io) {
   io.sockets.on('connection', function(socket) {
-    socket.on('set_username', function(name) {
-      get_socket_user(socket, function(user) {
-        if (user == null) {
-          socket.emit('error', {'message': 'Unable to set username'});
-          return;
-        }
-
-        users[user.sid].name = name;
-      });
-    });
-
     socket.on('set_session', function(session_id) {
       var user = get_socket_user_from_session(session_id);
       if (user == null) {
@@ -28,15 +18,56 @@ module.exports.bind = function(io) {
       }
     });
 
-    socket.on('get_data', function(data) {
+    socket.on('set_username', function(name) {
+      get_socket_user(socket, function(user) {
+        if (user == null) {
+          socket.emit('error', {'message': 'Unable to set username'});
+          return;
+        }
+
+        users[user.sid].name = name;
+      });
+    });
+
+    socket.on('disconnect', function() {
+      get_socket_user(socket, function(user) {
+        if (user != null) {
+          delete users[user.sid];
+        }
+      });
+    });
+
+    socket.on('get_data', function() {
       get_socket_user(socket, function(user) {
         if (user == null) {
           socket.emit('error', {'message': 'Unable to get user data'});
           return;
         }
 
-        socket.emit('user_data', { sid: user.sid, name: user.name });
+        socket.emit('data_dump', { sid: user.sid, name: user.name });
       });
+    });
+
+    socket.on('start_game', function() {
+      if (Object.keys(users).length == 1) {
+        socket.emit('error', {'message': 'no one to play with :('});
+        return;
+      }
+
+      var players = [];
+      for (var sid in users) {
+        players.push(sid);
+      }
+
+      var p = new Pusoy(players);
+      var user;
+
+      for (var i in players) {
+        user = get_socket_user_from_session(players[i]);
+        if (user != null) {
+          user.socket.emit('data_dump', p);
+        }
+      }
     });
   });
 }

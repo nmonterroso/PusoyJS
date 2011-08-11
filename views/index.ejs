@@ -8,12 +8,17 @@
       };
       
       var socket = io.connect(window.location.origin);
+
       socket.on('connect', function() {
         socket.emit('set_session', settings.sid);
       });
 
-      socket.on('user_data', function(data) {
+      socket.on('data_dump', function(data) {
         console.log(data);
+      });
+
+      socket.on('error', function(e) {
+        alert(e.message);
       });
     </script>
 	</head>
