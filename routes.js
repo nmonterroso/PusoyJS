@@ -7,8 +7,6 @@ module.exports.bind = function(app) {
     res.render('index', {
       layout: false,
       locals: {
-        title: 'Pusoy!',
-        username: 'nlsn',
         sess_id: req.sessionID
       }
     });

@@ -1,29 +1,20 @@
 <html>
-	<head>
-		<title>{%= title %}</title>
-    <script src="/socket.io/socket.io.js"></script>
-    <script type='text/javascript'>
-      var settings = {
-        sid: '{%= sess_id %}'
-      };
-      
-      var socket = io.connect(window.location.origin);
+<head>
+  <title>Pusoy JS</title>
+  <link rel='stylesheet' href='/css/pusoy.css' />
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/jquery-1.6.2.min.js"></script>
+  <script type='text/javascript'>
+    var p = {
+      sid: '{%= sess_id %}'
+    };
+  </script>
+  <script src="/js/sockets.js"></script>
+  <script src="/js/pusoy.js"></script>
+</head>
 
-      socket.on('connect', function() {
-        socket.emit('set_session', settings.sid);
-      });
-
-      socket.on('data_dump', function(data) {
-        console.log(data);
-      });
-
-      socket.on('error', function(e) {
-        alert(e.message);
-      });
-    </script>
-	</head>
-
-	<body>
-		Hello, {%= username %}!
-	</body>  
+<body>
+  {%- partial('username_prompt') %}
+  {%- partial('game_room') %}
+</body>  
 </html>

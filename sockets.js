@@ -9,12 +9,14 @@ module.exports.bind = function(io) {
   io.sockets.on('connection', function(socket) {
     socket.on('set_session', function(session_id) {
       var user = get_socket_user_from_session(session_id);
+
       if (user == null) {
-        users[session_id] = { sid: session_id, socket: socket };
+        users[session_id] = { sid: session_id, socket: socket, disconnected: false };
         socket.set('session_id', session_id, function() {});
       } else {
         users[session_id].socket = socket;
         socket.set('session_id', user.sid, function() {});
+        socket.emit('saved_username', user.name);
       }
     });
 
@@ -26,14 +28,37 @@ module.exports.bind = function(io) {
         }
 
         users[user.sid].name = name;
+        socket.emit('saved_username', name);
       });
     });
 
     socket.on('disconnect', function() {
       get_socket_user(socket, function(user) {
-        if (user != null) {
-          delete users[user.sid];
+        if (user != null && user.name != null) {
+          var u;
+
+          for (var sid in users) {
+            u = users[sid];
+            u.socket.emit('remove_user', user.name);
+          }
         }
+      });
+    });
+
+    socket.on('get_all_users', function() {
+      get_socket_user(socket, function(user) {
+        var user_list = [];
+        var u;
+
+        for (var sid in users) {
+          u = users[sid];
+          if (u.sid != user.sid && u.name != null) {
+            user_list.push(u.name);
+            u.socket.emit('add_user', user.name);
+          }
+        }
+
+        socket.emit('user_list', user_list);
       });
     });
 
