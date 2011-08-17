@@ -39,6 +39,8 @@ var globals = {
     alert(message);
   },
   transition: function(to, from) {
+    from = from || globals.active_page;
+    globals.active_page = to;
     from = $('#'+from);
     to = $('#'+to);
 

@@ -1,7 +1,8 @@
 var Hand = require("./hand").Hand;
 
-var Player = function(session_id) {
-  this.sid = session_id;
+var Player = function(id, name) {
+  this.id = id;
+  this.name = name;
   this.cards = [];
 }
 
@@ -40,8 +41,20 @@ Player.prototype = {
   },
   get_lowest_card: function() {
     var card = new Hand(this.cards).get_lowest_card();
-    console.log('LOWEST CARD: ', card);
     return card;
+  },
+  get_data: function(all_data) {
+    all_data = all_data || false;
+    var p = {
+      id: this.id,
+      name: this.name
+    }
+    
+    if (all_data) {
+      p.cards = this.cards;
+    }
+
+    return p;
   }
 };
 

@@ -23,3 +23,11 @@ p.socket.on('add_user', function(user) {
 p.socket.on('remove_user', function(user) {
   globals.remove_user(user);
 });
+
+p.socket.on('new_player', function(game_id, user) {
+  console.log(game_id, user);
+});
+
+p.socket.on('game_joined', function(game_id, name, players, is_owner) {
+  console.log(game_id, name, players, is_owner);
+});

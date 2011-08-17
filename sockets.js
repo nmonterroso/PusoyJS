@@ -1,7 +1,9 @@
 var EventEmitter = require('events').EventEmitter,
-  Pusoy = require('./objects/pusoy').Pusoy,
-  user_list = {},
-  next_uid = 0;
+    Pusoy = require('./objects/pusoy').Pusoy,
+    user_list = {},
+    game_list = {},
+    next_uid = 0,
+    next_gid = 0;
 
 module.exports = new EventEmitter();
 
@@ -32,27 +34,29 @@ module.exports.init_session = function(io, session_store) {
 module.exports.bind = function(io) {
   io.sockets.on('connection', function(socket) {
     var sid = socket.handshake.sessionID,
-        session = socket.handshake.session;
+        session = socket.handshake.session,
+        interval_id = setInterval(function() {
+          session.reload(function() {
+            session.touch().save();
+          });
+        }, 60*1000);
 
     socket.join(sid);
-    if (user_list[sid]) {
-      ++user_list[sid].active_connections;
-    } else {
+    if (!user_list[sid]) {
       user_list[sid] = {
         id: get_uid(sid),
         name: session.username || 'unknown_user',
-        active_connections: 1
       };
       socket.broadcast.emit('add_user', get_user(sid, false));
     }
 
     socket.on('disconnect', function() {
-      if (user_list[sid]) {
-        --user_list[sid].active_connections;
-        if (user_list[sid].active_connections <= 0) {
-          socket.broadcast.emit('remove_user', get_user(sid, false));
-          delete user_list[sid];
-        }
+      var sockets = get_sockets(io, sid);
+      
+      if (user_list[sid] && sockets.length == 1) {
+        socket.broadcast.emit('remove_user', get_user(sid, false));
+        delete user_list[sid];
+        clearInterval(interval_id);
       }
     });
 
@@ -67,26 +71,24 @@ module.exports.bind = function(io) {
       socket.emit('user_list', users);
     });
 
-    socket.on('start_game', function() {
-      if (Object.keys(users).length == 1) {
-        socket.emit('error', {'message': 'no one to play with :('});
-        return;
-      }
+    socket.on('join_game', function(game_name) {
+      var game = get_game(game_name, sid);
 
-      var players = [];
-      for (var sid in users) {
-        players.push(sid);
-      }
+      socket.join(game.channel_id);
+      game.pusoy.add_player(get_user(sid, false));
+      var sockets = get_sockets(io, game.channel_id);
+      if (sockets) {
+        var s, 
+            u = get_user(sid, false), 
+            player_list = [];
 
-      var p = new Pusoy(players);
-      var user;
-
-      for (var i in players) {
-        user = get_socket_user_from_session(players[i]);
-        if (user != null) {
-          user.socket.emit('data_dump', p);
+        for (var i in sockets) {
+          s = sockets[i];
+          s.emit('new_player', game.id, u);
         }
       }
+
+      socket.emit('game_joined', game.id, game.name, game.pusoy.get_player_list(), game.owner == sid);
     });
   });
 }
@@ -97,6 +99,22 @@ var get_uid = function(session_id) {
   }
 
   return ++next_uid;
+}
+
+var get_game = function(game_name, as_session) {
+  if (!game_list[game_name]) {
+    var gid = ++next_gid;
+
+    game_list[game_name] = {
+      id: gid,
+      name: game_name,
+      channel_id: 'game_'+gid,
+      owner: as_session,
+      pusoy: new Pusoy()
+    };
+  }
+
+  return game_list[game_name]
 }
 
 var get_user = function(session_id, get_all) {
@@ -116,12 +134,10 @@ var get_user = function(session_id, get_all) {
   return false;
 }
 
-var get_sockets = function(io, session_id) {
-  if (user_list[session_id]) {
-    return io.sockets.in(session_id);
-  }
+var get_sockets = function(io, room_name) {
+  var sockets = io.sockets.clients(room_name);
 
-  return false;
+  return !sockets || sockets.length == 0 ? false : sockets;
 }
 
 setTimeout(function() {

@@ -3,19 +3,10 @@ var Hand = require("./hand").Hand;
 var Deck = require("./deck").Deck;
 var Player = require("./player").Player;
 
-var Pusoy = function(players, observers) {
+var Pusoy = function() {
   this.deck = new Deck();
   this.players = [];
-  this.observers = observers || [];
   this.accept_type = Pusoy.ACCEPT_TYPES.ANY;
-
-  for (var i = 0; i < players.length; ++i) {
-    this.players.push(new Player(players[i]));
-  }
-
-  this.deal_cards();
-  this.active_player = this.get_player_with_lowest_card();
-  this.last_active_player = this.active_player;
 }
 
 Pusoy.CARDS_PER_PLAYER_1V1 = 17;
@@ -29,6 +20,14 @@ Pusoy.ACCEPT_TYPES = {
 };
 
 Pusoy.prototype = {
+  add_player: function(user) {
+    this.players.push(new Player(user.id, user.name));
+  },
+  start_game: function() {
+    this.deal_cards();
+    this.active_player = this.get_player_with_lowest_card();
+    this.last_active_player = this.active_player;
+  },
   deal_cards: function() {
     var cards_per_player;
     var pickup_cards;
@@ -61,6 +60,17 @@ Pusoy.prototype = {
     }
 
     return index;
+  },
+  get_player_list: function(all_data) {
+    all_data = all_data || false;
+    var player_list = [], player;
+
+    for (var i in this.players) {
+      player = this.players[i];
+      player_list.push(player.get_data(all_data));
+    }
+
+    return player_list;
   }
 }
 

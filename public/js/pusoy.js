@@ -13,6 +13,7 @@ $(document).ready(function() {
       globals.error('Please specify a game name!');
     }
 
+    p.socket.emit('join_game', name);
     return false;
   });
 
