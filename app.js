@@ -3,10 +3,10 @@
  * Module dependencies.
  */
 require('ejs');
-var express = require('express');
-
-var app = module.exports = express.createServer();
-var io = require("socket.io").listen(app);
+var express = require('express'),
+  app = module.exports = express.createServer(),
+  io = require("socket.io").listen(app),
+  session_store = new express.session.MemoryStore();
 
 // Configuration
 
@@ -22,7 +22,11 @@ app.configure(function(){
   app.use(express.bodyParser());
   app.use(express.methodOverride());
   app.use(express.cookieParser());
-  app.use(express.session({secret: "pusoy_is_awesome :D"}));
+  app.use(express.session({
+    secret: "Pu$0Yi$4w3s0m3", 
+    key: 'express.sid',
+    store: session_store,
+  }));
   app.use(app.router);
   app.use(express.static(__dirname + '/public'));
 });
@@ -47,5 +51,6 @@ routes.on('ready', function() {
 
 var sockets = require('./sockets');
 sockets.on('ready', function() {
+  sockets.init_session(io, session_store);
   sockets.bind(io);
 });

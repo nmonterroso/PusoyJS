@@ -6,15 +6,15 @@
   <script src="/js/jquery-1.6.2.min.js"></script>
   <script type='text/javascript'>
     var p = {
-      sid: '{%= sess_id %}'
+      name: '{%= username %}'
     };
   </script>
   <script src="/js/sockets.js"></script>
   <script src="/js/pusoy.js"></script>
+  <script src="/js/globals.js"></script>
 </head>
 
 <body>
-  {%- partial('username_prompt') %}
   {%- partial('game_room') %}
 </body>  
 </html>

@@ -1,76 +1,70 @@
-var EventEmitter = require('events').EventEmitter;
-var Pusoy = require('./objects/pusoy').Pusoy;
-var games_list = {};
-var users = {};
+var EventEmitter = require('events').EventEmitter,
+  Pusoy = require('./objects/pusoy').Pusoy,
+  user_list = {},
+  next_uid = 0;
 
 module.exports = new EventEmitter();
 
+module.exports.init_session = function(io, session_store) {
+  var parseCookie = require('connect').utils.parseCookie;
+  var Session = require('connect').middleware.session.Session;
+
+  io.set('authorization', function (data, accept) {
+    if (data.headers.cookie) {
+      data.cookie = parseCookie(data.headers.cookie);
+      data.sessionID = data.cookie['express.sid'];
+      data.sessionStore = session_store;
+      session_store.get(data.sessionID, function(err, session) {
+        if (err) {
+          accept(err.message, false);
+        } else {
+          data.session = new Session(data, session);
+          accept(null, true);
+        }
+      });
+    } else {
+      return accept('no cookie', false);
+    }
+  });
+};
+
+
 module.exports.bind = function(io) {
   io.sockets.on('connection', function(socket) {
-    socket.on('set_session', function(session_id) {
-      var user = get_socket_user_from_session(session_id);
+    var sid = socket.handshake.sessionID,
+        session = socket.handshake.session;
 
-      if (user == null) {
-        users[session_id] = { sid: session_id, socket: socket, disconnected: false };
-        socket.set('session_id', session_id, function() {});
-      } else {
-        users[session_id].socket = socket;
-        socket.set('session_id', user.sid, function() {});
-        socket.emit('saved_username', user.name);
+    socket.join(sid);
+    if (user_list[sid]) {
+      ++user_list[sid].active_connections;
+    } else {
+      user_list[sid] = {
+        id: get_uid(sid),
+        name: session.username || 'unknown_user',
+        active_connections: 1
+      };
+      socket.broadcast.emit('add_user', get_user(sid, false));
+    }
+
+    socket.on('disconnect', function() {
+      if (user_list[sid]) {
+        --user_list[sid].active_connections;
+        if (user_list[sid].active_connections <= 0) {
+          socket.broadcast.emit('remove_user', get_user(sid, false));
+          delete user_list[sid];
+        }
       }
     });
 
-    socket.on('set_username', function(name) {
-      get_socket_user(socket, function(user) {
-        if (user == null) {
-          socket.emit('error', {'message': 'Unable to set username'});
-          return;
-        }
-
-        users[user.sid].name = name;
-        socket.emit('saved_username', name);
-      });
-    });
-
-    socket.on('disconnect', function() {
-      get_socket_user(socket, function(user) {
-        if (user != null && user.name != null) {
-          var u;
-
-          for (var sid in users) {
-            u = users[sid];
-            u.socket.emit('remove_user', user.name);
-          }
-        }
-      });
-    });
-
     socket.on('get_all_users', function() {
-      get_socket_user(socket, function(user) {
-        var user_list = [];
-        var u;
-
-        for (var sid in users) {
-          u = users[sid];
-          if (u.sid != user.sid && u.name != null) {
-            user_list.push(u.name);
-            u.socket.emit('add_user', user.name);
-          }
+      var users = [];
+      for (var session_id in user_list) {
+        if (session_id != sid) {
+          users.push(get_user(session_id, false));
         }
+      }
 
-        socket.emit('user_list', user_list);
-      });
-    });
-
-    socket.on('get_data', function() {
-      get_socket_user(socket, function(user) {
-        if (user == null) {
-          socket.emit('error', {'message': 'Unable to get user data'});
-          return;
-        }
-
-        socket.emit('data_dump', { sid: user.sid, name: user.name });
-      });
+      socket.emit('user_list', users);
     });
 
     socket.on('start_game', function() {
@@ -97,24 +91,39 @@ module.exports.bind = function(io) {
   });
 }
 
-var get_socket_user_from_session = function(session_id) {
-  if (typeof users[session_id] != 'undefined') {
-    return users[session_id];
+var get_uid = function(session_id) {
+  if (user_list[session_id]) {
+    return user_list[session_id].id;
   }
 
-  return null;
+  return ++next_uid;
 }
 
-var get_socket_user = function(socket, callback) {
-  socket.get('session_id', function(err, sid) {
-    if (sid != null && typeof users[sid] != 'undefined')  {
-      callback(users[sid]);
-    } else {
-      callback(null);
-    }
-  });
+var get_user = function(session_id, get_all) {
+  get_all = get_all || false;
+
+  if (user_list[session_id]) {
+    if (get_all) {
+      return user_list[session_id];
+    } 
+
+    return {
+      id: user_list[session_id].id,
+      name: user_list[session_id].name
+    };
+  }
+
+  return false;
+}
+
+var get_sockets = function(io, session_id) {
+  if (user_list[session_id]) {
+    return io.sockets.in(session_id);
+  }
+
+  return false;
 }
 
 setTimeout(function() {
   module.exports.emit('ready');
-}, 10);
+}, 0);
