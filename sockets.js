@@ -103,12 +103,14 @@ module.exports.bind = function(io) {
     socket.on('start_game', function(game_id) {
       var user = get_user(sid, true);
       if (!user.game) {
+        socket.emit('error', { message: 'ERROR: No game for you found' });
         return;
       }
 
       var game = get_game(user.game),
           sockets = get_sockets(io, game.channel_id);
       if (game.owner != sid || !sockets) {
+        socket.emit('error', { message: 'ERROR: You are not the game owner or no one is connected?' });
         return;
       }
 
