@@ -53,6 +53,7 @@ module.exports.bind = function(io) {
     socket.on('disconnect', function() {
       var sockets = get_sockets(io, sid);
       
+      leave_game(io, sid);
       if (user_list[sid] && sockets.length == 1) {
         socket.broadcast.emit('remove_user', get_user(sid, false));
         delete user_list[sid];
@@ -72,11 +73,19 @@ module.exports.bind = function(io) {
     });
 
     socket.on('join_game', function(game_name) {
-      var game = get_game(game_name, sid);
+      var game = get_game(game_name, sid),
+          user = get_user(sid),
+          sockets = get_sockets(io, game.channel_id);
+
+      if (game.pusoy.has_started) {
+        socket.emit('error', { message: "Can't join game \""+game_name+"\", it's already in progress" });
+        return;
+      }
 
       socket.join(game.channel_id);
-      game.pusoy.add_player(get_user(sid, false));
-      var sockets = get_sockets(io, game.channel_id);
+      game_list[game.name].pusoy.add_player(user);
+      user_list[sid].game = game.name;
+
       if (sockets) {
         var s, 
             u = get_user(sid, false), 
@@ -84,11 +93,36 @@ module.exports.bind = function(io) {
 
         for (var i in sockets) {
           s = sockets[i];
-          s.emit('new_player', game.id, u);
+          s.emit('player_joined', game.id, u);
         }
       }
 
       socket.emit('game_joined', game.id, game.name, game.pusoy.get_player_list(), game.owner == sid);
+    });
+
+    socket.on('start_game', function(game_id) {
+      var user = get_user(sid, true);
+      if (!user.game) {
+        return;
+      }
+
+      var game = get_game(user.game),
+          sockets = get_sockets(io, game.channel_id);
+      if (game.owner != sid || !sockets) {
+        return;
+      }
+
+      try {
+        game_list[game.name].pusoy.start_game();
+      } catch (e) {
+        socket.emit('error', { message: e });
+        return;
+      }
+
+      for (var i in sockets) {
+        var user = get_user(sockets[i].handshake.sessionID, false);
+        sockets[i].emit('card_deal', game.id, game.pusoy.get_player_cards(user.id));
+      }
     });
   });
 }
@@ -114,7 +148,7 @@ var get_game = function(game_name, as_session) {
     };
   }
 
-  return game_list[game_name]
+  return game_list[game_name];
 }
 
 var get_user = function(session_id, get_all) {
@@ -136,8 +170,32 @@ var get_user = function(session_id, get_all) {
 
 var get_sockets = function(io, room_name) {
   var sockets = io.sockets.clients(room_name);
-
   return !sockets || sockets.length == 0 ? false : sockets;
+}
+
+var leave_game = function(io, sid) {
+  var user = get_user(sid, true);
+
+  if (!user.game) {
+    return;
+  }
+
+  var game = get_game(user.game),
+      sockets = get_sockets(io, game.channel_id);
+
+  game_list[game.name].pusoy.remove_player(user);
+
+  if (sockets) {
+    for (var i in sockets) {
+      sockets[i].emit('player_left', game.id, user.id);
+    }
+
+    if (game.pusoy.players.length <= 0) {
+      delete game_list[game.name];
+    }
+  }
+
+  delete user_list[sid].game;
 }
 
 setTimeout(function() {

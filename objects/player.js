@@ -12,6 +12,9 @@ Player.prototype = {
       this.cards.push(cards[i]);
     }
   },
+  get_cards: function() {
+    return new Hand(this.cards);
+  },
   use_cards: function(cards) {
     var index;
     var delete_queue = [];
