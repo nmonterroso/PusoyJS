@@ -11,7 +11,7 @@ var express = require('express'),
 // Configuration
 
 app.configure(function(){
-  app.set('listen_port', 80);
+  app.set('listen_port', 3000);
   app.set('views', __dirname + '/views');
   app.set('view engine', 'ejs');
   app.set('view options', {
@@ -32,8 +32,6 @@ app.configure(function(){
 });
 
 app.configure('development', function(){
-  //app.set('listen_port', 3000);
-  app.set('listen_port', 80);
   app.use(express.errorHandler({ dumpExceptions: true, showStack: true })); 
 });
 
