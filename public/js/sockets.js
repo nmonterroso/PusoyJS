@@ -61,6 +61,8 @@ p.socket.on('card_deal', function(game_id, cards) {
   if (p.active_game.id != game_id) {
     return;
   }
-
-  console.log(cards);
+  
+  $('#pre_game').hide();
+  p.active_game.cards = cards.cards;
+  globals.deal_cards();
 });

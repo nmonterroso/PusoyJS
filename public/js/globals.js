@@ -40,6 +40,33 @@ var globals = {
       }
     });  
   },
+  deal_cards: function() {
+    if (!p.active_game.cards) {
+      return;
+    }
+
+    var card, holder = $('#card_holder'), card_li;
+    for (var i in p.active_game.cards) {
+      card = p.active_game.cards[i];
+      card_li = $("<li class='card'><img src='/images/cards/"+card.rank+card.suit+".png' /></li>")
+        .appendTo('#card_holder')[0]
+      $.data(card_li, 'card_data', card);
+    }
+
+    holder
+      .sortable({
+        revert: 50,
+        placeholder: 'card_placeholder',
+        forcePlaceholderSize: true,
+        tolerance: 'pointer',
+        opacity: 0.5
+      })
+      .disableSelection()
+      .find('li.card')
+        .live('dblclick', function() {
+          $(this).appendTo('#card_drop_target');
+        });
+  },
   error: function(message) {
     alert(message);
   },

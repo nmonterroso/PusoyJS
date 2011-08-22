@@ -8,6 +8,10 @@ body {
   margin: 5px auto 0;
 }
 
+.clear {
+  clear: both;
+}
+
 h2.page_title {
   text-align: center;
   margin: 0 0 5px;
@@ -30,4 +34,31 @@ h2.page_title {
   height: 38px;
   font-weight: bold;
   width: 100px;
+}
+
+ul#card_holder, ul#card_drop_target {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+li.card:first-child {
+  margin-left: 0;
+}
+
+li.card {
+  float: left;
+  margin: 0 0 0 -57px;
+}
+
+li.card_placeholder:first-child {
+  margin-left: 0;
+}
+
+li.card_placeholder {
+  float: left;
+  margin: 0 0 0 -57px;
+  border: 1px dashed red;
+  background: black;
+  opacity: 0.5;
 }
