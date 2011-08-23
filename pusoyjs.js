@@ -6,7 +6,8 @@ require('ejs');
 var express = require('express'),
   app = module.exports = express.createServer(),
   io = require("socket.io").listen(app),
-  session_store = new express.session.MemoryStore();
+  MemcachedStore = require('connect-memcached')
+  session_store;
 
 // Configuration
 
@@ -22,20 +23,31 @@ app.configure(function(){
   app.use(express.bodyParser());
   app.use(express.methodOverride());
   app.use(express.cookieParser());
-  app.use(express.session({
-    secret: "Pu$0Yi$4w3s0m3", 
-    key: 'express.sid',
-    store: session_store,
-  }));
   app.use(app.router);
   app.use(express.static(__dirname + '/public'));
 });
 
 app.configure('development', function(){
+  session_store = new express.session.MemoryStore();
   app.use(express.errorHandler({ dumpExceptions: true, showStack: true })); 
+  app.use(express.session({
+    secret: "Pu$0Yi$4w3s0m3", 
+    key: 'express.sid',
+    store: session_store,
+  }));
 });
 
 app.configure('production', function(){
+  session_store = new MemcachedStore({
+    hosts: [
+      '127.0.0.1:11211'
+    ]
+  });
+  app.use(express.session({
+    secret: "Pu$0Yi$4w3s0m3", 
+    key: 'express.sid',
+    store: session_store,
+  }));
   app.use(express.errorHandler()); 
 });
 
