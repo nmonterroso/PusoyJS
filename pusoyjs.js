@@ -6,7 +6,7 @@ require('ejs');
 var express = require('express'),
   app = module.exports = express.createServer(),
   io = require("socket.io").listen(app),
-  MemcachedStore = require('connect-memcached')
+  MemcachedStore = require('connect-memcached'),
   session_store;
 
 // Configuration
