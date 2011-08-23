@@ -6,8 +6,21 @@
     <button id='start_game'>Start Game</button>
   </div>
   <div id='game'>
-    <ul id='card_drop_target'></ul>
-    <div class='clear'></div>
-    <ul id='card_holder'></ul>
-  </div>
+    <div id='board' class='card_target'>
+      <div id='last_active_play'>
+        <div id='last_active_player'></div>
+        <ul id='card_last_play' class='card_sortable'></ul>
+      </div>
+      <div id='current_play'>
+        <ul id='card_drop_target' class='card_sortable'></ul>
+      </div>
+      <div id='action_buttons'>
+        <button class='active_turn_button' id='send_cards', disabled='disabled'>Play</button>
+        <button class='active_turn_button' id='pass' disabled='disabled'>Pass</button>
+      </div>
+    </div>
+    <div class='card_target'>
+      <ul id='card_holder' class='card_sortable'></ul>
+      <div class='clear'></div>
+    </div
 </div>

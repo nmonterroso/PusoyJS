@@ -36,29 +36,72 @@ h2.page_title {
   width: 100px;
 }
 
-ul#card_holder, ul#card_drop_target {
+ul.card_sortable {
   list-style-type: none;
   margin: 0;
   padding: 0;
 }
 
-li.card:first-child {
+ul#card_holder li.ui-sortable-helper {
+  width: 15px !important;
+}
+
+ul.card_sortable li.card:first-child {
   margin-left: 0;
 }
 
-li.card {
+ul.card_sortable li.card {
   float: left;
   margin: 0 0 0 -57px;
 }
 
-li.card_placeholder:first-child {
+ul.card_sortable li.card_placeholder:first-child {
   margin-left: 0;
 }
 
-li.card_placeholder {
+ul.card_sortable li.card_placeholder {
   float: left;
   margin: 0 0 0 -57px;
   border: 1px dashed red;
   background: black;
   opacity: 0.5;
+}
+
+#active_game .user_list .user.active {
+  color: red;
+}
+
+#game {
+  display: none;
+}
+
+#board {
+  height: 192px;
+  padding: 48px 20px 0;
+}
+
+.card_target {
+  width: 100%;
+  padding: 10px 20px;
+  border: 2px solid red;
+  border-radius: 5px;
+  margin-top: 20px;
+}
+
+#last_active_play, #current_play {
+  float: left;
+  width: 200px
+}
+
+#current_play {
+  margin-left: 75px;
+}
+
+#action_buttons {
+  float: right;
+}
+
+#action_buttons .active_turn_button {
+  display: block;
+  width: 75px;
 }

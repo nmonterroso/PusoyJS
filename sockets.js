@@ -49,6 +49,7 @@ module.exports.bind = function(io) {
       };
       socket.broadcast.emit('add_user', get_user(sid, false));
     }
+    socket.emit('set_id', user_list[sid].id);
 
     socket.on('disconnect', function() {
       var sockets = get_sockets(io, sid);
@@ -124,6 +125,59 @@ module.exports.bind = function(io) {
       for (var i in sockets) {
         var user = get_user(sockets[i].handshake.sessionID, false);
         sockets[i].emit('card_deal', game.id, game.pusoy.get_player_cards(user.id));
+        sockets[i].emit('turn_notification', game_list[game.name].pusoy.active_player);
+      }
+    });
+
+    socket.on('send_cards', function(to_game, cards) {
+      if (!game_list[to_game]) {
+        socket.emit('error', { message: 'Invalid game' });
+        return;
+      }
+
+      var game = get_game(to_game),
+          user = get_user(sid, true),
+          error = false;
+
+      if (!game || user.game != game.name) {
+        error = 'Unable to send move to specified game';
+      } else {
+        var stat = game_list[game.name].pusoy.play_cards(user.id, cards);
+        if (stat.error) {
+          error = stat.error;
+        } else {
+          send_turn_notification(io, game.name, cards, stat.is_win);
+        }
+      } 
+
+      if (error) {
+        socket.emit('error', { message: error });
+      }
+    });
+
+    socket.on('pass', function(to_game) {
+      if (!game_list[to_game]) {
+        socket.emit('error', { message: 'Invalid game' });
+        return;
+      }
+
+      var game = get_game(to_game),
+          user = get_user(sid, true),
+          error = false;
+
+      if (!game || user.game != game.name) {
+        error = 'Unable to send move to specified game';
+      } else {
+        var stat = game_list[game.name].pusoy.pass(user.id);
+        if (stat.error) {
+          error = stat.error;
+        } else {
+          send_turn_notification(io, game.name, 'pass', false);
+        }
+      }
+
+      if (error) {
+        socket.emit('error', { message: error });
       }
     });
   });
@@ -173,6 +227,22 @@ var get_user = function(session_id, get_all) {
 var get_sockets = function(io, room_name) {
   var sockets = io.sockets.clients(room_name);
   return !sockets || sockets.length == 0 ? false : sockets;
+}
+
+var send_turn_notification = function(io, game_name, cards, is_winning_turn) {
+  if (!game_list[game_name]) {
+    return;
+  }
+
+  var game = get_game(game_name),
+      sockets = get_sockets(io, game.channel_id);
+
+  for (var i in sockets) {
+    sockets[i].emit('turn_notification', game.pusoy.active_player, cards);
+    if (is_winning_turn) {
+      sockets[i].emit('game_over', game.pusoy.last_active_player);
+    }
+  }
 }
 
 var leave_game = function(io, sid) {

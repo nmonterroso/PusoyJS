@@ -38,4 +38,4 @@ module.exports.bind = function(app) {
 
 setTimeout(function() {
   module.exports.emit('ready');
-}, 10);
+}, 0);

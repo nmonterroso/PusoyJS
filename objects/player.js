@@ -15,23 +15,34 @@ Player.prototype = {
   get_cards: function() {
     return new Hand(this.cards);
   },
-  use_cards: function(cards) {
+  use_cards: function(card_list) {
     var index;
-    var delete_queue = [];
-    
-    for (var i = 0; i < cards.length; ++i) {
-      index = this.get_card_index(card);
+
+    for (var i in card_list) {
+      index = this.get_card_index(card_list[i]);
       if (index != -1) {
-        delete_queue.push(index);
+        this.cards[index].is_used = true;
+      }
+    }
+  },
+  card_count: function() {
+    var count = 0;
+    for (var i in this.cards) {
+      if (!this.cards[i].is_used) {
+        ++count;
       }
     }
 
-    for (var i = 0; i < delete_queue.length; ++i) {
-      this.cards.splice(delete_queue[i], 1);
-    }
+    return count;
   },
   has_card: function(card) {
-    return get_card_index(card) != -1;
+    var index = this.get_card_index(card);
+
+    if (index == -1) {
+      return false;
+    }
+
+    return this.cards[index].is_used == false;
   },
   get_card_index: function(card) {
     for (var i = 0; i < this.cards.length; ++i) {

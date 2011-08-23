@@ -1,6 +1,7 @@
 var Card = function(rank, suit) {
   this.rank = rank;
   this.suit = suit;
+  this.is_used = false;
 }
 
 Card.prototype = {
@@ -38,6 +39,28 @@ Card.prototype = {
   is_higher_than: function(card) {
     return this.get_rank_value() > card.get_rank_value() || 
       this.get_suit_value() > card.get_suit_value();
+  },
+  is_valid: function() {
+    var suits = ['c', 'h', 'd', 's'],
+        ranks = [2, 3, 4, 5, 6, 7, 8, 9, 10, 'j', 'q', 'k', 'a'],
+        found_suit = false,
+        found_rank = false;
+
+    for (var i in suits) {
+      if (this.suit == suits[i]) {
+        found_suit = true;
+        break;
+      }
+    }
+
+    for (var j in ranks) {
+      if (this.rank == ranks[j]) {
+        found_rank = true;
+        break;
+      }
+    }
+
+    return found_suit && found_rank;
   },
   equals: function(card) {
     return this.get_rank_value() == card.get_rank_value() &&

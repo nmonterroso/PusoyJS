@@ -34,9 +34,11 @@ var globals = {
     });
     
     container.html('');
+    var user_container;
     $.each(user_list, function(i, e) {
-      if (e.name) {
-        container.append("<div class='user'>"+e.name+"</div>");
+      if (e.name && e.id) {
+        user_container = $("<div class='user'>"+e.name+"</div>").appendTo(container)[0];
+        $.data(user_container, 'user_data', e);
       }
     });  
   },
@@ -58,14 +60,49 @@ var globals = {
         revert: 50,
         placeholder: 'card_placeholder',
         forcePlaceholderSize: true,
-        tolerance: 'pointer',
-        opacity: 0.5
+        grid: [15, 20],
+        opacity: 0.25
       })
       .disableSelection()
-      .find('li.card')
-        .live('dblclick', function() {
-          $(this).appendTo('#card_drop_target');
-        });
+  },
+  set_active_player: function(active_player_id) {
+    var data;
+    $('#active_game .user_list .user').each(function(i, e) {
+      data = $.data(e, 'user_data');
+      if (data.id == active_player_id) {
+        p.active_game.active_player = active_player_id;
+        $(e).addClass('active');
+      } else {
+        $(e).removeClass('active');
+      }
+    });
+  },
+  set_last_play: function(user, cards) {
+    $('#last_active_player').text(user.name+' played');
+    var html = "", card;
+
+    for (var i in cards) {
+      card = cards[i];
+      html += "<li class='card'><img src='/images/cards/"+card.rank+card.suit+".png' /></li>";
+    }
+
+    $('#card_holder, #current_play').find('ul.card_sortable li.card').each(function(i, e) {
+      var card_data = $.data(e, 'card_data');
+      for (var j in cards) {
+        if (card_data.rank == cards[j].rank && card_data.suit == cards[j].suit) {
+          $(e).remove();
+        }
+      }
+    });
+
+    $('#card_last_play').html(html);
+  },
+  get_outgoing_cards: function() {
+    var cards = [];
+    $('ul#card_drop_target li.card').each(function(i, e) {
+      cards.push($.data(e, 'card_data'));
+    });
+    return cards;
   },
   error: function(message) {
     alert(message);
